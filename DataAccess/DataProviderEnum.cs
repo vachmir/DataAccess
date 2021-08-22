@@ -13,6 +13,6 @@ namespace DataAccess
         OleDb,
     #endif
         Odbc,
-        //None
+        None
     }
 }
