@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 using System.Data.Common;
 using System.Data.Odbc;
 #if PC 
@@ -14,16 +15,21 @@ namespace DataAccess
     {
         static void Main(string[] args)
         {
+            // DataProviderFactory();
+            SQLConnection();
+        }
+        static void DataProviderFactory()
+        {
             var (provider, connectionString) = GetProviderFromConfiguration();
             DbProviderFactory? factory = GetDbProviderFactory(provider);
 
-//#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+            //#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             using (DbConnection connection = factory.CreateConnection())
-//#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+            //#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             {
-                if (connection==null)
+                if (connection == null)
                 {
-                    Console.WriteLine( $"Unable to create the connection object");
+                    Console.WriteLine($"Unable to create the connection object");
                     return;
                 }
 
@@ -53,18 +59,16 @@ namespace DataAccess
                 }
             }
         }
-        static DbProviderFactory? GetDbProviderFactory(DataProviderEnum provider)
-          => provider switch
-          {
-              DataProviderEnum.SqlServer => SqlClientFactory.Instance,
-              DataProviderEnum.Odbc => OdbcFactory.Instance,
-          #if PC
-              ///DataProviderEnum.OleDb => OleDbFactory.Instance,
-          #endif
-               _ => null
-            };
-
-        static (DataProviderEnum Provider,string ConnectioString ) GetProviderFromConfiguration()
+        static DbProviderFactory? GetDbProviderFactory(DataProviderEnum provider) => provider switch
+             {
+                 DataProviderEnum.SqlServer => SqlClientFactory.Instance,
+                 DataProviderEnum.Odbc => OdbcFactory.Instance,
+              #if PC
+                 DataProviderEnum.OleDb => OleDbFactory.Instance,
+              #endif
+                 _ => null
+             };
+        static (DataProviderEnum Provider, string ConnectioString) GetProviderFromConfiguration()
         {
             IConfiguration config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -77,6 +81,26 @@ namespace DataAccess
             };
             throw new Exception("Invalid Data Provider value supplied");
         }
-
+    
+        static void SQLConnection()
+        {
+            using (SqlConnection connection = new SqlConnection())
+            {
+                connection.ConnectionString = @" Data Source=.;Integrated Security = True;Initial Catalog=AutoLot";
+                connection.Open();
+                // Create a SQL command object.
+                string sql = @"Select i.id, m.Name as Make, i.Color, i.Petname FROM Inventory i INNER JOIN Makes m on m.Id = i.MakeId";
+                SqlCommand myCommand = new SqlCommand(sql, connection);
+                // Obtain a data reader a la ExecuteReader().
+                using (SqlDataReader myDataReader = myCommand.ExecuteReader())
+                {
+                    // Loop over the results.
+                    while (myDataReader.Read())
+                    {
+                        Console.WriteLine($"-> Make: {myDataReader["Make"]}, PetName: {myDataReader["PetName"]}, Color: {myDataReader["Color"]}.");
+                    }
+                }
+            }
+        }
     }
 }
