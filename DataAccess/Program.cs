@@ -16,9 +16,9 @@ namespace DataAccess
         static void Main(string[] args)
         {        
 
-            // DataProviderFactory();
+            //DataProviderFactory();
             //SQLConnection();
-            ConnectionStringBuilder();
+            //ConnectionStringBuilder();
         }
         static void DataProviderFactory()
         {
@@ -26,7 +26,7 @@ namespace DataAccess
             DbProviderFactory? factory = GetDbProviderFactory(provider);
 
             //#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-            using (DbConnection connection = factory.CreateConnection())
+            using (DbConnection? connection = factory.CreateConnection())
             //#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             {
                 if (connection == null)
