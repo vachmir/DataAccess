@@ -91,15 +91,13 @@ namespace DataAccess.DataOperations
             OpenConnection();
             CarViewModel? car = null;
             //This should use parameters for security reasons
-            string sql =
-            $@"SELECT i.Id, i.Color, i.PetName,m.Name as Make FROM Inventory i INNER JOIN Makes m on m.Id = i.MakeId WHERE i.Id = {id}";
+            string sql =$@"SELECT i.Id, i.Color, i.PetName,m.Name as Make FROM Inventory i INNER JOIN Makes m on m.Id = i.MakeId WHERE i.Id = {id}";
             using SqlCommand command =
             new SqlCommand(sql, _sqlConnection)
             {
                 CommandType = CommandType.Text
             };
-            SqlDataReader dataReader =
-            command.ExecuteReader(CommandBehavior.CloseConnection);
+            SqlDataReader dataReader = command.ExecuteReader(CommandBehavior.CloseConnection);
             while (dataReader.Read())
             {
                 car = new CarViewModel
@@ -132,16 +130,43 @@ namespace DataAccess.DataOperations
         public void InsertAuto(Car car)
         {
             OpenConnection();
-            // Format a SQL statement.
+            // 
             string sql = "Insert Into Inventory (MakeId, Color, PetName) Values " +
-            $"('{car.MakeId}', '{car.Color}', '{car.PetName}')";
+            "(@MakeId, @Color, @PetName)";
             // Execute with connection.
             using (SqlCommand command = new SqlCommand(sql, _sqlConnection))
             {
-                command.CommandType = CommandType.Text;
+                SqlParameter parameter = new SqlParameter
+                {
+                    ParameterName="@MakeId",
+                    Value=car.MakeId,
+                    SqlDbType=SqlDbType.Int,
+                    Direction=ParameterDirection.Input
+                };
+                command.Parameters.Add(parameter);
+
+                parameter = new SqlParameter
+                {
+                    ParameterName = "@Color",
+                    Value = car.Color,
+                    SqlDbType = SqlDbType.NVarChar,
+                    Size = 50,
+                    Direction = ParameterDirection.Input
+                };
+                command.Parameters.Add(parameter);
+                parameter = new SqlParameter
+                {
+                    ParameterName = "@PetName",
+                    Value = car.PetName,
+                    SqlDbType = SqlDbType.NVarChar,
+                    Size = 50,
+                    Direction = ParameterDirection.Input
+                };
+                command.Parameters.Add(parameter);
                 command.ExecuteNonQuery();
+                CloseConnection();
             }
-            CloseConnection();
+            
         }
 
         public void DeleteCar(int id)
@@ -162,6 +187,7 @@ namespace DataAccess.DataOperations
                     throw error;
                 }
             }
+            CloseConnection();
         }
 
         public void UpdateCarPetName(int id, string newPetName)
@@ -175,5 +201,7 @@ namespace DataAccess.DataOperations
             }
             CloseConnection();
         }
+
+
     }
 }
