@@ -112,7 +112,7 @@ namespace DataAccess.DataOperations
             return car;
         }
 
-        public void InsertAuto(string color, int makeId, string petName)
+        public static void InsertAuto(string color, int makeId, string petName)
         {
             OpenConnection();
             //Format a SQL statement
@@ -202,6 +202,94 @@ namespace DataAccess.DataOperations
             CloseConnection();
         }
 
+        public void ProcessCreditRisk(bool throwEx, int customerId)
+        {
+            OpenConnection();
+            string fName, lName;
+            var cmdSelect = new SqlCommand("Select * from Customers where Id = @customerId", _sqlConnection);
+            SqlParameter paramId = new SqlParameter
+            {
+                ParameterName = "@customerId",
+                SqlDbType = SqlDbType.Int,
+                Value = customerId,
+                Direction = ParameterDirection.Input
+            };
+            cmdSelect.Parameters.Add(paramId);
+            using (var dataReader=cmdSelect.ExecuteReader())
+            {
+                if (dataReader.HasRows)
+                {
+                    dataReader.Read();
+                    fName = (string)dataReader["FirstName"];
+                    lName= (string)dataReader["LastName"];
+                }
+                else
+                {
+                    CloseConnection();
+                    return;
+                }
+            }
+            cmdSelect.Parameters.Clear();
 
+            // Command objects representing each step of the operation.
+            var cmdUpdate = new SqlCommand("Update Customers set LastName = LastName + ' (CreditRisk) ' where Id = @customerId", _sqlConnection);
+            cmdUpdate.Parameters.Add(paramId);
+
+            var cmdInsert = new SqlCommand("Insert Into CreditRisks (CustomerId,FirstName, LastName) Values( @CustomerId, @FirstName, @LastName)", _sqlConnection);
+            SqlParameter parameterId2 = new SqlParameter
+            {
+                ParameterName = "@CustomerId",
+                SqlDbType = SqlDbType.Int,
+                Value = customerId,
+                Direction = ParameterDirection.Input
+            };
+            SqlParameter parameterFirstName = new SqlParameter
+            {
+                ParameterName = "@FirstName",
+                Value = fName,
+                SqlDbType = SqlDbType.NVarChar,
+                Size = 50,
+                Direction = ParameterDirection.Input
+            };
+            SqlParameter parameterLastName = new SqlParameter
+            {
+                ParameterName = "@LastName",
+                Value = lName,
+                SqlDbType = SqlDbType.NVarChar,
+                Size = 50,
+                Direction = ParameterDirection.Input
+            }; 
+            cmdInsert.Parameters.Add(parameterId2);
+            cmdInsert.Parameters.Add(parameterFirstName);
+            cmdInsert.Parameters.Add(parameterLastName);
+
+            SqlTransaction tx = null;
+            try
+            {
+                tx = _sqlConnection.BeginTransaction();
+
+                cmdInsert.Transaction = tx;
+                cmdUpdate.Transaction = tx;
+
+                cmdInsert.ExecuteNonQuery();
+                cmdUpdate.ExecuteNonQuery();
+
+                if (throwEx)
+                {
+                    throw new Exception("Sorry! Database error! Tx failed!");
+                }
+
+                tx.Commit();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                tx?.Rollback();
+            }
+            finally
+            {
+                CloseConnection();
+            }
+        }
     }
 }

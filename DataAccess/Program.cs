@@ -8,17 +8,17 @@ using System.Data.Odbc;
 using System.IO;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using DataAccess.DataOperations;
 
 namespace DataAccess 
 {
     class Program
     {
         static void Main(string[] args)
-        {        
-
+        {            
             //DataProviderFactory();
             //SQLConnection();
-            //ConnectionStringBuilder();
+            ConnectionStringBuilder();
         }
         static void DataProviderFactory()
         {
@@ -132,6 +132,22 @@ namespace DataAccess
                 }
             }         
 
+        }
+
+        void FlagCustomer()
+        {
+            Console.WriteLine("Transaction Example");
+
+            bool throwEx = true;
+            Console.Write("Do you want to throw an exception (Y or N): ");
+            var userAnswer = Console.ReadLine();
+            if (string.IsNullOrEmpty(userAnswer) || userAnswer.Equals("N", StringComparison.OrdinalIgnoreCase))
+            {
+                throwEx = false;
+            }
+            var dal = new InventoryDal();
+            dal.ProcessCreditRisk(throwEx, 1);
+            Console.WriteLine("Check CreditRisk table for results");
         }
     }
 }
